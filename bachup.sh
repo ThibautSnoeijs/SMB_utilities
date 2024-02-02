@@ -1,9 +1,19 @@
 #!/bin/bash
 
+Today="$(date +%F)"
+
+echo This backup\'s date is $Today
+
+function smbcommand(){
+	smbclient '\\server\share' -U user%password -c "$@"
+}
+
+smbcommand "prompt OFF; cd \"startic/destdir/\"; mkdir $Today"
+
 function dirsend(){
-	echo started copying $1 directory
-	smbclient '\\server\share' -U user%password -d 0 -c "prompt OFF; recurse ON; cd \"startic/destdir/\"; mkdir \"$2\"; cd \"$2\"; lcd \"$1\"; mput *" && echo && echo finished copying $1 directory
-	}
+	echo started compressing $1 directory
+	tar cfh - $1 | xz -zfT 0 - > /compressed/files/dir/$2.tar.xz && echo finished compressing $1 directory && smbcommand "prompt OFF; cd \"startic/destdir/$Today\"; lcd \"/compressed/files/dir/\"; put $2.tar.xz"
+}
 
 cd ~
 
